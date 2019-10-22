@@ -16,15 +16,10 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 public class ToggledSolenoid {
     DoubleSolenoid piston;
     boolean toggleBool = false;
-    boolean button;
+    boolean button; 
 
     public ToggledSolenoid(int forward, int reverse) {
         piston = new DoubleSolenoid(forward, reverse);
-    }
-
-    public void set(boolean b) {
-        toggleBool = !toggleBool;
-        piston.set(b ? Value.kForward : Value.kReverse);
     }
 
     public void togglePiston() {

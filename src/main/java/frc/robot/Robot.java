@@ -10,7 +10,6 @@ package frc.robot;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -27,6 +26,7 @@ import frc.robot.commands.*;
 import frc.robot.OI;
 import frc.robot.subsystems.*;
 
+
 public class Robot extends TimedRobot {
 
   public OI m_oi;
@@ -38,9 +38,9 @@ public class Robot extends TimedRobot {
   public static DoubleSolenoid hatchIntake = new DoubleSolenoid(6, 7);
   public static ToggledSolenoid intakeActuator = new ToggledSolenoid(0, 1);
 
-  // forward, reverse
+  //forward, reverse
 
-  // public static DoubleSolenoid testPiston = new DoubleSolenoid(6,7);
+  //public static DoubleSolenoid testPiston = new DoubleSolenoid(6,7);
 
   // Subsystems
   public static Spark leftWinch = new Spark(4);
@@ -59,7 +59,7 @@ public class Robot extends TimedRobot {
   public SpeedControllerGroup m_right = new SpeedControllerGroup(RightDrive, vaRightDrive, vbRightDrive);
   DifferentialDrive m_drive = new DifferentialDrive(m_left, m_right);
 
-  public boolean shiftState = false;
+  public boolean shiftState = false; 
 
   @Override
   public void robotInit() {
@@ -68,49 +68,29 @@ public class Robot extends TimedRobot {
   }
 
   void matchPeriodic() {
-
+    
     c.setClosedLoopControl(true);
-
-    m_visiontracking.setTracking(true);
-
-    double tv = m_visiontracking.get("tv");
-
-    if (m_visiontracking.getTarget() == 1) {
-      SmartDashboard.putBoolean("Target Acquired", true);
-    } else {
-      SmartDashboard.putBoolean("Target Acquired", false);
-    }
-
-    SmartDashboard.putNumber("Target area", m_visiontracking.get("ta"));
-    SmartDashboard.putNumber("thor", m_visiontracking.get("thor"));
-    SmartDashboard.putNumber("tvert", m_visiontracking.get("tvert"));
-    SmartDashboard.putNumber("whratio", m_visiontracking.get("thor") / m_visiontracking.get("tvert"));
-    SmartDashboard.putNumber("tx", m_visiontracking.get("tx") / m_visiontracking.get("tvert"));
-
+    
     if (m_oi.driveJoy.getXButton()) {
-      double steeringAdjust = m_visiontracking.pidX();
-      m_drive.arcadeDrive(m_visiontracking.zoomForward(), steeringAdjust * m_visiontracking.getTarget());
-      shifters.set(false);
-      shiftState = false;
-      if (m_visiontracking.get("ta") > 5) {
-        intakeActuator.set(true);
-      }
+      m_visiontracking.setTracking(true);
+      double steeringAdjust = .038 * m_visiontracking.pidX();
+      m_drive.arcadeDrive(-m_oi.getDriveJoyYL() * m_visiontracking.get("tv"), steeringAdjust);
     } else {
+      m_visiontracking.setTracking(false);
       m_drive.curvatureDrive(-m_oi.getDriveJoyYL(), m_oi.getDriveJoyXR(), m_oi.isQuickTurn());
     }
-
-    SmartDashboard.putString("Drive Mode", m_oi.isQuickTurn() ? "Arcade" : "Curvature");
-
+ 
     if (m_oi.opJoy.getAButtonPressed()) {
       new winchDeploy();
     } else {
       winch.setWinch(-m_oi.getOpJoyYL());
     }
 
+   
     if (Math.abs(m_oi.driveJoy.getTriggerAxis(Hand.kLeft)) > 0.1) {
       hatchIntake.set(Value.kForward);
     } else if (Math.abs(m_oi.driveJoy.getTriggerAxis(Hand.kRight)) > .1) {
-      hatchIntake.set(Value.kReverse);
+      hatchIntake.set(Value.kReverse); 
     } else {
       hatchIntake.set(Value.kOff);
     }
@@ -126,62 +106,14 @@ public class Robot extends TimedRobot {
     if (m_oi.opJoy.getBButtonPressed()) {
       winchPiston.togglePiston();
     }
-  }
-
-  void autoPeriodic() {
-
-    c.setClosedLoopControl(true);
-
-    m_visiontracking.setTracking(true);
-
-    double tv = m_visiontracking.get("tv");
-
-    if (m_visiontracking.getTarget() == 1) {
-      SmartDashboard.putBoolean("Target Acquired", true);
+/*
+    if (m_oi.getOpJoyBRPressed()) {
+      testPiston.set(Value.kForward);
+    } else if (m_oi.getOpJoyBLPressed()) {
+      testPiston.set(Value.kReverse);
     } else {
-      SmartDashboard.putBoolean("Target Acquired", false);
-    }
-
-    SmartDashboard.putNumber("Target area", m_visiontracking.get("ta"));
-    SmartDashboard.putNumber("thor", m_visiontracking.get("thor"));
-    SmartDashboard.putNumber("tvert", m_visiontracking.get("tvert"));
-    SmartDashboard.putNumber("whratio", m_visiontracking.get("thor") / m_visiontracking.get("tvert"));
-
-    if (m_oi.driveJoy.getXButton()) {
-      double steeringAdjust = m_visiontracking.pidX();
-      m_drive.arcadeDrive(-m_visiontracking.zoomForward(), steeringAdjust * m_visiontracking.getTarget());
-    } else {
-      m_drive.curvatureDrive(-m_oi.getDriveJoyYL(), m_oi.getDriveJoyXR(), m_oi.isQuickTurn());
-    }
-
-    SmartDashboard.putString("Drive Mode", m_oi.isQuickTurn() ? "Aracde" : "Curvature");
-
-    if (m_oi.opJoy.getAButtonPressed()) {
-      new winchDeploy();
-    } else {
-      winch.setWinch(-m_oi.getOpJoyYL());
-    }
-
-    if (Math.abs(m_oi.driveJoy.getTriggerAxis(Hand.kLeft)) > 0.1) {
-      hatchIntake.set(Value.kForward);
-    } else if (Math.abs(m_oi.driveJoy.getTriggerAxis(Hand.kRight)) > .1) {
-      hatchIntake.set(Value.kReverse);
-    } else {
-      hatchIntake.set(Value.kOff);
-    }
-    if (m_oi.getOpJoyBLPressed()) {
-      intakeActuator.togglePiston();
-    }
-    if (m_oi.getDriveJoyBLPressed()) {
-      shifters.togglePiston();
-      shiftState = !shiftState;
-    }
-    SmartDashboard.putString("Gear", shiftState ? "High" : "Low");
-
-    if (m_oi.opJoy.getBButtonPressed()) {
-      winchPiston.togglePiston();
-    }
-
+      testPiston.set(Value.kOff);
+    }*/
   }
 
   @Override
@@ -204,7 +136,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
-    autoPeriodic();
+    matchPeriodic();
     Scheduler.getInstance().run();
   }
 

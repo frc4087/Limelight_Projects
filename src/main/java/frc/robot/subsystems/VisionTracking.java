@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.command.Command;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTable;
 import java.util.ArrayList;
@@ -10,8 +9,6 @@ public class VisionTracking extends Command {
 
     NetworkTable m_limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
     double tv = get("tv");
-    double previousError, previousZoom = 0;
-    //public double tar;
 
     public double get(String var) {
         return NetworkTableInstance.getDefault().getTable("limelight").getEntry(var).getDouble(0.0);
@@ -21,9 +18,9 @@ public class VisionTracking extends Command {
     }
 
     public void setTracking(boolean tracking) {
-        m_limelightTable.getEntry("camMode").setNumber(0);
-        m_limelightTable.getEntry("ledMode").setNumber(0);
-    }
+        m_limelightTable.getEntry("camMode").setNumber(tracking ? 0 : 1);
+        m_limelightTable.getEntry("ledMode").setNumber(tracking ? 0 : 1);
+      }
 
     protected void initialize() {
     }
@@ -31,52 +28,34 @@ public class VisionTracking extends Command {
     protected void execute() {
     }
 
-    public double pidX() {
-        double min = 0.05;
-        double kP = -0.04;// -0.038;
-        double tx = get("tx");
-        double error = -tx;
-
-        if (tx > 0.0) {
-            return kP * error - min;
-        } else {
-            return kP * error + min;
+    public double averageValues(String targetName) {
+        double target = get("targetName");
+        ArrayList<Double> arr = new ArrayList<Double>();
+        if (arr.size() >= 5) {
+            arr.remove(0);
         }
-
-    }
-
-    public double getTarget() {
-        double _minhor = 38, _minvert = 17;
-        double  _maxhor = 195, _maxvert = 65;
-        double whratio = get("thor") / get("tvert");
-        double minratio = _minhor / _minvert;
-        double maxratio = _maxhor / _maxvert;
-
-        SmartDashboard.putNumber("minratio", minratio);
-        SmartDashboard.putNumber("maxratio", maxratio);
-
-        if (get("tv") == 1) {
-            if (minratio < whratio && whratio < maxratio) {
-                return 1;
-            } else {
-                return 0; 
+        arr.add(target);
+        double n = 0;
+        double sum = 0;
+        for (double v : arr) {
+            sum += v;
+            if (v != 0) {
+                n++;
             }
-        } else {
-            return 0;
         }
+        return sum / n;
     }
 
-    public double zoomForward() {
-        if (getTarget() == 0) {
-            return previousZoom;
-        } else {
-            double lmin = .5;
-            double dkP = 0.1;
-            double currentta = get("ta");
-            double idealta = 7;
-            double error = idealta - currentta;
-            return previousZoom = Math.max(dkP * error, lmin);
-        }
+    public double pidX() {
+        double kP = 1;
+        double error = get("tx");
+        return kP * error;
+    }
+
+    public double pidY() {
+        double kP = 0.1;
+        double error = -averageValues("ty");
+        return kP * error;
     }
 
     @Override
