@@ -5,12 +5,5 @@
     "debugfile": "frcJava_roborio.debugconfig",
     "project": "Field-Oriented-Drive-Field-Oriented-Drive",
     "language": "java"
-  },
-  {
-    "artifact": "frcJava (in project FODrive_Limelight)",
-    "target": "roborio",
-    "debugfile": "frcJava_roborio.debugconfig",
-    "project": "FODrive_Limelight",
-    "language": "java"
   }
 ]
